@@ -30,10 +30,54 @@ const pie = d3.pie()
 
 // create dummy data to test, using the const 'pie' above that is a function
 // return angles that sum to 2PI
-const angles = pie([
+/* const angles = pie([
   {name:'rent', cost:500},
   {name:'bills', cost:300},
   {name:'gaming', cost:200}
-]);
+]); */
 
-console.log(angles);
+// console.log(angles);
+
+// the arc generator generates the path string (that has a property called 'd' that is the path string) that we need to draw the pie chart
+// the arc path generator need the start and end angle
+// the arcPath is a slice path
+// d3.arc() returns an arc generator
+const arcPath = d3.arc()
+  .outerRadius(dims.radius) // outer radius of the arcs, from the center
+  .innerRadius(dims.radius/2) // inner radius from where the arc start
+
+// console.log(arcPath(angles[0])); // generate the d string that represent the path
+
+// update function
+const update = data => {
+  console.log(data);
+};
+
+// data array and firectore
+var data = [];
+
+db.collection('expenses').onSnapshot(res => {
+  // cycling through the changes and for each changes create a doc obj
+  // this doc obj will contain the data of that document of that change,
+  // plus an extra id property that is the random generated id associated with that doc
+  res.docChanges().forEach(change=>{
+    const doc = {...change.doc.data(), id: change.doc.id };
+
+    switch (change.type) {
+      case 'added':
+        data.push(doc);
+        break;
+      case 'modified':
+        const index = data.findIndex(item=>item.id == doc.id);
+        data[index] = doc;
+        break;
+      case 'removed':
+        data = data.filter(item=>item.id !== doc.id);
+        break;
+      default:
+        break;
+    }
+  });
+
+  update(data);
+})
