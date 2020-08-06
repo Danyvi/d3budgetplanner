@@ -52,12 +52,29 @@ const arcPath = d3.arc()
 // d3['schemeSet3'] returns an array of different colors that is gonna be the output range for the scale
 const color = d3.scaleOrdinal(d3['schemeSet3']);
 
+// create the group for the legend on the right side of the graph
+// legend setup
+const legendGroup = svg.append('g')
+  .attr('transform' ,`translate(${dims.width + 40}, 10)`); // translate to the right by the width of the graph plus something like 40px and 10px from the top
+
+// legend creation with the use of the 3rd party plugin d3-legend
+const legend = d3.legendColor()
+  .shape('circle') // each item in the legend will have a circle next to it
+  .shapePadding(10) // vertical space between items
+  .scale(color); // we use our color scaleOrdinal to tell what color each circle should have. In this way it matches the item color in the pie with the name
+
 // update function
 const update = data => {
 
   // update color scale domain
   color.domain(data.map(d => d.name));
 
+  // call the 'legend' and apply to the 'legendGroup' group. We need to do in the update function, because it is data dependent
+  // dependent on the color scale 'color' in the domain
+  // update and call legend
+  legendGroup.call(legend);
+  legendGroup.selectAll('text') // select all the text svg inside the group and change its color
+    .attr('fill', 'white')
   // pass our data array through pie generator
   // this spits out a new array of data where I can find the angles with the original data
   // join enhanced (pie) data to paths elements
