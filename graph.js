@@ -15,7 +15,7 @@ const cent = {
 const svg = d3.select('.canvas')
   .append('svg')
   .attr('width', dims.width + 150) // extra amount of space on the right for the legend
-  .attr('height', dims.height + 150) // extra space at the bottom if we need it
+  .attr('height', dims.height + 150); // extra space at the bottom if we need it
 
 // create a group that contains all our graph elements and appending to the svg
 const graph = svg.append('g')
@@ -44,13 +44,36 @@ const pie = d3.pie()
 // d3.arc() returns an arc generator
 const arcPath = d3.arc()
   .outerRadius(dims.radius) // outer radius of the arcs, from the center
-  .innerRadius(dims.radius/2) // inner radius from where the arc start
+  .innerRadius(dims.radius/2); // inner radius from where the arc start
 
 // console.log(arcPath(angles[0])); // generate the d string that represent the path
 
+// ordinal scale: from domain to color
+// d3['schemeSet3'] returns an array of different colors that is gonna be the output range for the scale
+const color = d3.scaleOrdinal(d3['schemeSet3']);
+
 // update function
 const update = data => {
-  console.log(data);
+
+  // update color scale domain
+  color.domain(data.map(d => d.name));
+
+  // pass our data array through pie generator
+  // this spits out a new array of data where I can find the angles with the original data
+  // join enhanced (pie) data to paths elements
+  const path = graph.selectAll('path')
+    .data(pie(data));
+  
+    // console.log the enter selection
+  // console.log(path.enter());
+
+  path.enter()
+    .append('path')
+      .attr('class', 'arc')
+      .attr('d', arcPath)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 3)
+      .attr('fill', d => color(d.data.name));
 };
 
 // data array and firectore
