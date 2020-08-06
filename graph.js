@@ -61,36 +61,44 @@ const update = data => {
   const path = graph.selectAll('path')
     .data(pie(data));
   
-  path.enter()
-  .append('path')
-  .attr('class', 'arc')
-  .attr('stroke', '#fff')
-  .attr('stroke-width', 3)
-  .attr('fill', d => color(d.data.name))
-  .each(function(d){ this._current = d })
-  .transition()
-    .duration(750)
-    .attrTween('d', arcTweenEnter);
-
-  // handle the exit selection
-  path.exit()
+    
+    // handle the exit selection
+    path.exit()
     .transition()
-      .duration(750)
-      .attrTween('d', arcTweenExit)
-      .remove();
-
-  // handle the current DOM path updates 
-  path.attr('d', arcPath)
+    .duration(750)
+    .attrTween('d', arcTweenExit)
+    .remove();
+    
+    // handle the current DOM path updates 
+    path.attr('d', arcPath)
     .transition()
     .duration(750)
     .attrTween('d', arcTweenUpdate);
+    
+    path.enter()
+    .append('path')
+    .attr('class', 'arc')
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 3)
+    .attr('fill', d => color(d.data.name))
+    .each(function(d){ this._current = d })
+    .transition()
+      .duration(750)
+      .attrTween('d', arcTweenEnter);
+  
+    // add events
+    graph.selectAll('path')
+      .on('mouseover', handleMouseOver)
+      .on('mouseout', handleMouseOut);
 
-};
-
-// data array and firestore
-var data = [];
-
-db.collection('expenses').onSnapshot(res => {
+  };
+  
+  
+  
+  // data array and firestore
+  var data = [];
+  
+  db.collection('expenses').onSnapshot(res => {
   // cycling through the changes and for each changes create a doc obj
   res.docChanges().forEach(change=>{
     const doc = {...change.doc.data(), id: change.doc.id };
@@ -117,11 +125,10 @@ db.collection('expenses').onSnapshot(res => {
 
 // create arcs for the enter selection. We pass in the data, d
 const arcTweenEnter = (d) => {
-  
   var i = d3.interpolate(d.endAngle, d.startAngle);
-
   return function(t) {
     d.startAngle = i(t);
+    return arcPath(d)
   }
 };
 
@@ -136,14 +143,34 @@ const arcTweenExit = (d) => {
 // ARC UPDATE TWEEN
 
 function arcTweenUpdate(d){
-
   // we need to interpolate a value between the two objects, this._current (starting position, current) and d (ending position, new)
   var i = d3.interpolate(this._current, d);
-
   // update the current prop with new updated data
-  this._current = i(1);
+  this._current = d;
   return function(t) {
     return arcPath(i(t));
   }
+}
 
+// event handlers
+
+/**
+ * it references automatically the data,d of the specif path, 
+ * the i attribute (index of that element in the selection) and 
+ * the n attribute (the array of elements in the selection)
+ */
+const handleMouseOver = (d,i,n) => {
+  // console.log(n[i]); // the element which we hover 
+  d3.select(n[i]) // d3 wrap the current element so we have access to the d3 methods
+    .transition('changeSliceFill') // name the transition so that it can not be interrupted
+      .duration(300)
+      .attr('fill', '#fff')
+}
+
+const handleMouseOut = (d,i,n) => {
+  // console.log(n[i]); // the element which we hover 
+  d3.select(n[i]) // d3 wrap the current element so we have access to the d3 methods
+    .transition('changeSliceFill')
+      .duration(300)
+      .attr('fill', color(d.data.name))
 }
