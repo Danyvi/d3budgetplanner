@@ -70,10 +70,13 @@ const update = data => {
   path.enter()
   .append('path')
   .attr('class', 'arc')
-  .attr('d', arcPath)
+  // .attr('d', arcPath) // startin position of the path, no longer needed with transition
   .attr('stroke', '#fff')
   .attr('stroke-width', 3)
-  .attr('fill', d => color(d.data.name));
+  .attr('fill', d => color(d.data.name))
+  .transition()
+    .duration(750)
+    .attrTween('d', arcTweenEnter); // when this is called for each element in the enter selection it will automatically pass the data, d, associated with that path (const arcTweenEnter = (d) => {...})
 
   // handle the exit selection
   path.exit()
@@ -83,7 +86,7 @@ const update = data => {
   // we want d3 to redraw the path arcPath function
   // this automatically passes to the path the newest data to the current path in the DOM and redrawn the things
   path.attr('d', arcPath);
-  
+
 };
 
 // data array and firectore
@@ -113,4 +116,60 @@ db.collection('expenses').onSnapshot(res => {
   });
 
   update(data);
-})
+
+});
+
+// create arcs for the enter selection. We pass in the data, d
+const arcTweenEnter = (d) => {
+  // setup of the interpolation function
+  // endAngle is the name that pie generated to our data
+  // from endAngle to startAngle
+  /**
+   * Over time we will call this interpolation function, i, and it will spit up 
+   * a value between the end angle and the start angle every time.
+   * Then over time we will update the start angle so that it will be\
+   * nearer to the final startAngle.
+   * It will start where startAngle = endAngle and over time will make its way to the final
+   * value of the start angle (where it should be at the end)
+   */
+  var i = d3.interpolate(d.endAngle, d.startAngle);
+
+  // now we need to return a functionn that takes a parameter t, that is the ticker, a value between 0 and 1.
+  // this is what we pass to interpolation i to spit out
+  // value 0 represents the start of our transition
+  // value 1 represents represents the end of our transition
+  
+  /**
+   * inside this function we wnat to update the value of the start angle over time
+   */
+  return function(t) {
+    d.startAngle = i(t);
+    // when we have the starAngle which is constantly updated over time
+    // we want to return a value for our path because it is going to change over time
+    // now with the updated angle we can call the arcPath generator over time
+  
+    /**
+     * when t = 0 at the start of the transition
+     * the startAngle is set to be equal to the endAngle
+     * At half of the transition we pass t = 0.5 and it will spit out a value between the endAngle and startAngle
+     */
+  
+    /**
+     * we are calling this interpolation function over time to get the updated startAngle
+     * until eventually we get the final startAngle that corresponds to the full slice size
+     */
+
+    // over time startAngle changes (the ticker,t, changes) and so the path
+    return arcPath(d);  // it will return a new 'd' attribute (that contains the path string) everytime the ticker changes
+  };
+
+  /**
+   * Now that we are returning that value we need to apply the tween (arcTweenEnter) 
+   * to enter selection.
+   * 
+   */
+
+
+
+
+}
