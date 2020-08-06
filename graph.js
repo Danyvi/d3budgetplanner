@@ -64,16 +64,26 @@ const update = data => {
   const path = graph.selectAll('path')
     .data(pie(data));
   
-    // console.log the enter selection
+  // console.log the enter selection
   // console.log(path.enter());
 
   path.enter()
-    .append('path')
-      .attr('class', 'arc')
-      .attr('d', arcPath)
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 3)
-      .attr('fill', d => color(d.data.name));
+  .append('path')
+  .attr('class', 'arc')
+  .attr('d', arcPath)
+  .attr('stroke', '#fff')
+  .attr('stroke-width', 3)
+  .attr('fill', d => color(d.data.name));
+
+  // handle the exit selection
+  path.exit()
+    .remove();
+
+  // handle the current DOM path updates (d attribute of the path)
+  // we want d3 to redraw the path arcPath function
+  // this automatically passes to the path the newest data to the current path in the DOM and redrawn the things
+  path.attr('d', arcPath);
+  
 };
 
 // data array and firectore
