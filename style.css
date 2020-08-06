@@ -5,3 +5,14 @@ h2, p {
 header {
   margin-bottom: 40px;
 }
+
+.tip {
+  padding: 10px;
+  background: #333;
+  color: #fff;
+}
+
+.tip .delete {
+  color: hotpink;
+  font-size: 0.8em;
+}

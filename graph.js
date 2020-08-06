@@ -46,7 +46,19 @@ const legend = d3.legendColor()
   .shapePadding(10) // vertical space between items
   .scale(color); 
 
-// update function
+const tip = d3.tip() // use of the external library d3-tip
+  .attr('class', 'tip card') // card is a materialize css class
+  .html(d => {
+    let content = `<div class="name">${d.data.name}</div>`;
+    content += `<div class="cost">${d.data.cost}</div>`;
+    content += `<div class="delete">Click Slice to Delete</div>`;
+    return content;
+  }); // html determines the html that will be inside the tooltip when shown in the browser
+
+graph.call(tip);
+
+
+  // update function
 const update = data => {
 
   // update color scale domain
@@ -88,8 +100,15 @@ const update = data => {
   
     // add events
     graph.selectAll('path')
-      .on('mouseover', handleMouseOver)
-      .on('mouseout', handleMouseOut);
+      .on('mouseover', (d,i,n) => {
+        tip.show(d, n[i]) ;// instead of this we use n[i]
+        handleMouseOver(d,i,n);
+      })
+      .on('mouseout', (d,i,n) => {
+        tip.hide();
+        handleMouseOut(d,i,n);
+      })
+      .on('click', handleClick)
 
   };
   
@@ -173,4 +192,12 @@ const handleMouseOut = (d,i,n) => {
     .transition('changeSliceFill')
       .duration(300)
       .attr('fill', color(d.data.name))
-}
+};
+
+const handleClick = d => {
+  // d representts the data attached to the slice we click
+  // console.log(d);
+  const id = d.data.id;
+  // we use the id to query the firsestore database to delete it
+  db.collection('expenses').doc(id).delete();
+};
