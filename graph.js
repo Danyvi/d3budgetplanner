@@ -80,7 +80,10 @@ const update = data => {
 
   // handle the exit selection
   path.exit()
-    .remove();
+    .transition()
+      .duration(750)
+      .attrTween('d', arcTweenExit)
+      .remove();
 
   // handle the current DOM path updates (d attribute of the path)
   // we want d3 to redraw the path arcPath function
@@ -169,7 +172,14 @@ const arcTweenEnter = (d) => {
    * 
    */
 
-
+  // reverse the enterTween with the angle swapped
+  const arcTweenExit = (d) => {
+    var i = d3.interpolate(d.startAngle, d.endAngle);
+    return function(t){
+      d.startAngle = i(t);
+      return arcPath(d);
+    }
+  }
 
 
 }
