@@ -74,6 +74,9 @@ const update = data => {
   .attr('stroke', '#fff')
   .attr('stroke-width', 3)
   .attr('fill', d => color(d.data.name))
+  // at the time the 'path' enter the DOM this._current references the data associated with the element at that moment in time when it enters the DOM
+  // the d is the data (the original data) when enter into the DOM
+  .each(function(d){ this._current = d }) // each() allows us to perform a function to each element of enter selection. 'this' refers to the current appended 'path' that we are running on. _current is a property
   .transition()
     .duration(750)
     .attrTween('d', arcTweenEnter); // when this is called for each element in the enter selection it will automatically pass the data, d, associated with that path (const arcTweenEnter = (d) => {...})
@@ -88,7 +91,10 @@ const update = data => {
   // handle the current DOM path updates (d attribute of the path)
   // we want d3 to redraw the path arcPath function
   // this automatically passes to the path the newest data to the current path in the DOM and redrawn the things
-  path.attr('d', arcPath);
+  path.attr('d', arcPath)
+    .transition()
+    .duration(750)
+    .attrTween('d', arcTweenUpdate); // automatically pass in the new data, d, everytime 
 
 };
 
@@ -164,7 +170,8 @@ const arcTweenEnter = (d) => {
 
     // over time startAngle changes (the ticker,t, changes) and so the path
     return arcPath(d);  // it will return a new 'd' attribute (that contains the path string) everytime the ticker changes
-  };
+  }
+};
 
   /**
    * Now that we are returning that value we need to apply the tween (arcTweenEnter) 
@@ -173,13 +180,36 @@ const arcTweenEnter = (d) => {
    */
 
   // reverse the enterTween with the angle swapped
-  const arcTweenExit = (d) => {
-    var i = d3.interpolate(d.startAngle, d.endAngle);
-    return function(t){
-      d.startAngle = i(t);
-      return arcPath(d);
-    }
+const arcTweenExit = (d) => {
+  var i = d3.interpolate(d.startAngle, d.endAngle);
+  return function(t){
+    d.startAngle = i(t);
+    return arcPath(d);
   }
+};
 
+// ARC UPDATE TWEEN
+// use function keyword instead of arrow function for the different 'this' reference
+// in the function keyword the 'this' can refer to the current element
+function arcTweenUpdate(d){
+  // when we apply a tween to update our path for the current element already in the DOM
+  // the data object, d, represents the new data, the data that has just been updated for that path, the new data in the database
+  // that's why we want to store the this._current = d, the current state of each element
+  // now we have the reference to the new state, the d in the arcTweenUpdate
+  console.log('Current data for the element at the time of entry (data before being updated) -> this._current: ', this._current); // current data at the time of entry
+  console.log('updated data for the element: ', d);
+  // now we'll update the arcTween to our current selection already in the DOM
+  // we'll transition between these two states
+  
+  // we need to interpolate a value between the two objects, this._current (starting position, current) and d (ending position, new)
+  var i = d3.interpolate(this._current, d);
+
+  // update the current prop with new updated data
+  this._current = i(1); // i(1) is the same as d (since i(1) takes the second element of the interpolation), the new current, when this is all done
+  return function(t) {
+    // t, time ticker
+    // we need to redraw our path using the arc generator with whatever data we interpolate
+    return arcPath(i(t));
+  }
 
 }
