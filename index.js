@@ -13,11 +13,7 @@ form.addEventListener('submit', (event)=>{
       cost: parseInt(cost.value)
     };
 
-    // submit the item to our expenses collection saving it as a document
-    // this operation takes time. It is an asynchronous operation and return a Promise
-    // so we can chain a .then() method that fires a callback function when 
-    // the action of adding the document is completed
-    // .then() takes a parameter that is the response (res) from the firestore database
+    
     db.collection('expenses')
       .add(item)
       .then(res => {
